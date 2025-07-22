@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Anggaran Bulanan</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #334155;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 800px;
+        }
+        input[type="number"], input[type="text"], select {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            font-size: 1rem;
+            color: #475569;
+            transition: border-color 0.2s ease-in-out;
+        }
+        input[type="number"]:focus, input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        button:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .summary-box {
+            background-color: #e0f2fe;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 1px solid #bfdbfe;
+        }
+        .positive-balance {
+            color: #10b981; /* green-500 */
+            font-weight: 700;
+        }
+        .negative-balance {
+            color: #ef4444; /* red-500 */
+            font-weight: 700;
+        }
+        .text-income {
+            color: #10b981;
+        }
+        .text-expense {
+            color: #ef4444;
+        }
+        .table-header {
+            background-color: #f8fafc;
+        }
+        /* Custom alert modal styles */
+        .custom-modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .custom-modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            text-align: center;
+        }
+        .custom-modal-content button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+        .custom-modal-content button:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Anggaran Bulanan Saya</h1>
+
+        <!-- Bagian Pendapatan -->
+        <div class="mb-8 p-6 bg-blue-50 rounded-lg shadow-sm">
+            <h2 class="text-2xl font-semibold text-blue-700 mb-4">Pendapatan</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="incomeSource" class="block text-gray-700 text-sm font-medium mb-1">Sumber Pendapatan</label>
+                    <input type="text" id="incomeSource" placeholder="Gaji, Pekerjaan Sampingan, dll." class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label for="incomeAmount" class="block text-gray-700 text-sm font-medium mb-1">Jumlah (Rp)</label>
+                    <input type="number" id="incomeAmount" placeholder="Contoh: 8500000" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            <button onclick="addIncome()" class="w-full md:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-200 ease-in-out">Tambah Pendapatan</button>
+            <div class="mt-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Daftar Pendapatan</h3>
+                <div id="incomeList" class="space-y-2">
+                    <!-- Income items will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Bagian Pengeluaran -->
+        <div class="mb-8 p-6 bg-red-50 rounded-lg shadow-sm">
+            <h2 class="text-2xl font-semibold text-red-700 mb-4">Pengeluaran</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label for="expenseDescription" class="block text-gray-700 text-sm font-medium mb-1">Deskripsi</label>
+                    <input type="text" id="expenseDescription" placeholder="Sewa Rumah, Belanja, Hiburan" class="w-full rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500">
+                </div>
+                <div>
+                    <label for="expenseScope" class="block text-gray-700 text-sm font-medium mb-1">Lingkup</label>
+                    <select id="expenseScope" class="w-full rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500">
+                        <option value="Rumah">Rumah</option>
+                        <option value="Kantor">Kantor</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="expenseCategory" class="block text-gray-700 text-sm font-medium mb-1">Kategori</label>
+                    <select id="expenseCategory" class="w-full rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500">
+                        <option value="">Pilih Kategori</option>
+                        <option value="Tetap">Tetap (Sewa, Cicilan)</option>
+                        <option value="Variabel">Variabel (Makanan, Transportasi)</option>
+                        <option value="Sesekali/Tahunan">Sesekali/Tahunan (Pajak, Liburan)</option>
+                        <option value="Tabungan/Investasi">Tabungan/Investasi</option>
+                        <option value="Pelunasan Utang">Pelunasan Utang</option>
+                        <option value="Lain-lain">Lain-lain</option>
+                    </select>
+                </div>
+                <div id="customCategoryInputDiv" class="col-span-full hidden">
+                    <label for="customCategory" class="block text-gray-700 text-sm font-medium mb-1">Kategori Kustom</label>
+                    <input type="text" id="customCategory" placeholder="Masukkan kategori kustom Anda" class="w-full rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500">
+                </div>
+                <div class="col-span-full md:col-span-1">
+                    <label for="expenseAmount" class="block text-gray-700 text-sm font-medium mb-1">Jumlah (Rp)</label>
+                    <input type="number" id="expenseAmount" placeholder="Contoh: 150000" class="w-full rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500">
+                </div>
+            </div>
+            <button onclick="addExpense()" class="w-full md:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition duration-200 ease-in-out">Tambah Pengeluaran</button>
+            <div class="mt-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Daftar Pengeluaran</h3>
+                <div id="expenseList" class="space-y-2">
+                    <!-- Expense items will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Ringkasan Anggaran -->
+        <div class="summary-box">
+            <h2 class="text-2xl font-semibold text-blue-800 mb-4">Ringkasan Anggaran</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg">
+                <p class="font-medium">Total Pendapatan: <span id="totalIncome" class="text-income font-bold">Rp 0</span></p>
+                <p class="font-medium">Total Pengeluaran: <span id="totalExpense" class="text-expense font-bold">Rp 0</span></p>
+                <p class="font-medium col-span-full">Saldo Akhir: <span id="balance" class="font-bold">Rp 0</span></p>
+            </div>
+            <button onclick="exportToCsv()" class="w-full md:w-auto px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md transition duration-200 ease-in-out mt-4">Export ke Excel (CSV)</button>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="customAlertModal" class="custom-modal">
+        <div class="custom-modal-content">
+            <p id="customAlertMessage"></p>
+            <button onclick="closeCustomAlert()">OK</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase and data
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(__firebase_config);
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let userId = null; // Will be set after authentication
+
+        // Arrays to store data (will be populated by Firestore listeners)
+        let incomes = [];
+        let expenses = [];
+
+        // Function to display custom alert
+        function showCustomAlert(message) {
+            document.getElementById('customAlertMessage').textContent = message;
+            document.getElementById('customAlertModal').style.display = 'flex';
+        }
+
+        // Function to close custom alert
+        function closeCustomAlert() {
+            document.getElementById('customAlertModal').style.display = 'none';
+        }
+
+        // Function to format amount to Rupiah currency
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Function to get current date and time in a readable format
+        function getCurrentDateTime() {
+            const now = new Date();
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            return now.toLocaleDateString('id-ID', options);
+        }
+
+        // Function to add income to Firestore
+        async function addIncome() {
+            const sourceInput = document.getElementById('incomeSource');
+            const amountInput = document.getElementById('incomeAmount');
+            const source = sourceInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+            const timestamp = getCurrentDateTime();
+
+            // Input validation
+            if (!source || isNaN(amount) || amount <= 0) {
+                showCustomAlert('Mohon masukkan sumber pendapatan dan jumlah yang valid.');
+                return;
+            }
+
+            // Check if user is authenticated
+            if (!userId) {
+                showCustomAlert('Aplikasi sedang memuat atau gagal autentikasi. Mohon tunggu sebentar atau refresh halaman.');
+                return;
+            }
+
+            try {
+                // Add document to Firestore
+                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/incomes`), {
+                    source,
+                    amount,
+                    timestamp
+                });
+                // Clear input fields after successful addition
+                sourceInput.value = '';
+                amountInput.value = '';
+            } catch (e) {
+                console.error("Error adding income document: ", e);
+                showCustomAlert("Gagal menambahkan pendapatan. Silakan coba lagi.");
+            }
+        }
+
+        // Function to toggle custom category input visibility
+        function toggleCustomCategoryInput() {
+            const categorySelect = document.getElementById('expenseCategory');
+            const customCategoryDiv = document.getElementById('customCategoryInputDiv');
+            if (categorySelect.value === 'Lain-lain') {
+                customCategoryDiv.classList.remove('hidden');
+            } else {
+                customCategoryDiv.classList.add('hidden');
+                document.getElementById('customCategory').value = ''; // Clear custom input when hidden
+            }
+        }
+
+        // Function to add expense to Firestore
+        async function addExpense() {
+            const descriptionInput = document.getElementById('expenseDescription');
+            const scopeInput = document.getElementById('expenseScope');
+            const categoryInput = document.getElementById('expenseCategory');
+            const customCategoryInput = document.getElementById('customCategory');
+            const amountInput = document.getElementById('expenseAmount');
+
+            const description = descriptionInput.value.trim();
+            const scope = scopeInput.value;
+            let category = categoryInput.value;
+            const amount = parseFloat(amountInput.value);
+            const timestamp = getCurrentDateTime();
+
+            // Handle custom category input
+            if (category === 'Lain-lain') {
+                const customText = customCategoryInput.value.trim();
+                if (!customText) {
+                    showCustomAlert('Mohon masukkan teks untuk kategori kustom "Lain-lain".');
+                    return;
+                }
+                category = customText; // Use custom text as category
+            }
+
+            // Input validation
+            if (!description || !category || isNaN(amount) || amount <= 0) {
+                showCustomAlert('Mohon masukkan deskripsi, kategori, dan jumlah pengeluaran yang valid.');
+                return;
+            }
+
+            // Check if user is authenticated
+            if (!userId) {
+                showCustomAlert('Aplikasi sedang memuat atau gagal autentikasi. Mohon tunggu sebentar atau refresh halaman.');
+                return;
+            }
+
+            try {
+                // Add document to Firestore
+                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/expenses`), {
+                    description,
+                    scope,
+                    category,
+                    amount,
+                    timestamp
+                });
+                // Clear input fields after successful addition
+                descriptionInput.value = '';
+                scopeInput.value = 'Rumah'; // Reset scope to default
+                categoryInput.value = '';
+                customCategoryInput.value = '';
+                document.getElementById('customCategoryInputDiv').classList.add('hidden'); // Hide custom input
+                amountInput.value = '';
+            } catch (e) {
+                console.error("Error adding expense document: ", e);
+                showCustomAlert("Gagal menambahkan pengeluaran. Silakan coba lagi.");
+            }
+        }
+
+        // Function to delete income from Firestore
+        async function deleteIncome(id) {
+            if (!userId) {
+                showCustomAlert('Aplikasi sedang memuat atau gagal autentikasi. Mohon tunggu sebentar atau refresh halaman.');
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/incomes`, id));
+            } catch (e) {
+                console.error("Error removing income document: ", e);
+                showCustomAlert("Gagal menghapus pendapatan. Silakan coba lagi.");
+            }
+        }
+
+        // Function to delete expense from Firestore
+        async function deleteExpense(id) {
+            if (!userId) {
+                showCustomAlert('Aplikasi sedang memuat atau gagal autentikasi. Mohon tunggu sebentar atau refresh halaman.');
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/expenses`, id));
+            } catch (e) {
+                console.error("Error removing expense document: ", e);
+                showCustomAlert("Gagal menghapus pengeluaran. Silakan coba lagi.");
+            }
+        }
+
+        // Function to render income list from local 'incomes' array
+        function renderIncomes() {
+            const incomeListDiv = document.getElementById('incomeList');
+            incomeListDiv.innerHTML = ''; // Clear previous list
+
+            incomes.forEach((income) => {
+                const incomeItem = document.createElement('div');
+                incomeItem.className = 'flex justify-between items-center bg-white p-3 rounded-md shadow-sm border border-gray-200';
+                incomeItem.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-gray-800 font-medium">${income.source}</span>
+                        <span class="text-gray-500 text-xs italic">Dicatat: ${income.timestamp}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-income font-semibold mr-3">${formatRupiah(income.amount)}</span>
+                        <button onclick="deleteIncome('${income.id}')" class="text-red-500 hover:text-red-700 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                incomeListDiv.appendChild(incomeItem);
+            });
+        }
+
+        // Function to render expense list from local 'expenses' array
+        function renderExpenses() {
+            const expenseListDiv = document.getElementById('expenseList');
+            expenseListDiv.innerHTML = ''; // Clear previous list
+
+            expenses.forEach((expense) => {
+                const expenseItem = document.createElement('div');
+                expenseItem.className = 'flex justify-between items-center bg-white p-3 rounded-md shadow-sm border border-gray-200';
+                expenseItem.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-gray-800 font-medium">${expense.description}</span>
+                        <span class="text-gray-600 text-xs italic">Lingkup: ${expense.scope} | Kategori: ${expense.category} | Dicatat: ${expense.timestamp}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-expense font-semibold mr-3">${formatRupiah(expense.amount)}</span>
+                        <button onclick="deleteExpense('${expense.id}')" class="text-red-500 hover:text-red-700 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                expenseListDiv.appendChild(expenseItem);
+            });
+        }
+
+        // Function to update summary (total income, total expense, balance)
+        function updateSummary() {
+            const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
+            const totalExpense = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const balance = totalIncome - totalExpense;
+
+            document.getElementById('totalIncome').textContent = formatRupiah(totalIncome);
+            document.getElementById('totalExpense').textContent = formatRupiah(totalExpense);
+
+            const balanceElement = document.getElementById('balance');
+            balanceElement.textContent = formatRupiah(balance);
+
+            // Change balance color based on positive or negative
+            if (balance >= 0) {
+                balanceElement.classList.remove('negative-balance');
+                balanceElement.classList.add('positive-balance');
+            } else {
+                balanceElement.classList.remove('positive-balance');
+                balanceElement.classList.add('negative-balance');
+            }
+        }
+
+        // Function to export data to CSV
+        function exportToCsv() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+
+            // Headers for the combined CSV
+            const headers = ["Tipe", "Deskripsi", "Kategori/Sumber", "Lingkup", "Jumlah", "Waktu Dicatat"];
+            csvContent += headers.join(",") + "\r\n";
+
+            // Add income data
+            incomes.forEach(item => {
+                const row = [
+                    "Pendapatan",
+                    `"${item.source.replace(/"/g, '""')}"`, // Escape double quotes
+                    "", // Kategori/Sumber is empty for income
+                    "", // Lingkup is empty for income
+                    item.amount,
+                    `"${item.timestamp.replace(/"/g, '""')}"`
+                ];
+                csvContent += row.join(",") + "\r\n";
+            });
+
+            // Add expense data
+            expenses.forEach(item => {
+                const row = [
+                    "Pengeluaran",
+                    `"${item.description.replace(/"/g, '""')}"`, // Escape double quotes
+                    `"${item.category.replace(/"/g, '""')}"`, // Escape double quotes
+                    `"${item.scope.replace(/"/g, '""')}"`, // Escape double quotes
+                    item.amount,
+                    `"${item.timestamp.replace(/"/g, '""')}"`
+                ];
+                csvContent += row.join(",") + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "anggaran_bulanan.csv");
+            document.body.appendChild(link); // Required for Firefox
+            link.click();
+            document.body.removeChild(link); // Clean up
+        }
+
+        // Firebase Authentication and Data Loading
+        document.addEventListener('DOMContentLoaded', () => {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Authenticated with UID:", userId);
+                    loadDataFromFirestore();
+                } else {
+                    try {
+                        // Sign in anonymously if no user is logged in
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                        userId = auth.currentUser?.uid || crypto.randomUUID(); // Fallback for anonymous
+                        console.log("Signed in anonymously or with custom token. UID:", userId);
+                        loadDataFromFirestore();
+                    } catch (error) {
+                        console.error("Error during authentication:", error);
+                        showCustomAlert("Gagal melakukan autentikasi. Silakan coba lagi.");
+                    }
+                }
+            });
+
+            // Attach event listener for expenseCategory select
+            document.getElementById('expenseCategory').addEventListener('change', toggleCustomCategoryInput);
+        });
+
+        // Function to load data from Firestore with real-time listeners
+        async function loadDataFromFirestore() {
+            if (!userId) {
+                console.warn("User ID not available yet. Cannot load data.");
+                return;
+            }
+
+            // Listen for real-time updates on incomes
+            onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/incomes`), (snapshot) => {
+                incomes = []; // Clear existing incomes to avoid duplicates on updates
+                snapshot.forEach((doc) => {
+                    incomes.push({ id: doc.id, ...doc.data() });
+                });
+                renderIncomes();
+                updateSummary();
+            }, (error) => {
+                console.error("Error fetching incomes:", error);
+                showCustomAlert("Gagal memuat pendapatan dari database.");
+            });
+
+            // Listen for real-time updates on expenses
+            onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/expenses`), (snapshot) => {
+                expenses = []; // Clear existing expenses to avoid duplicates on updates
+                snapshot.forEach((doc) => {
+                    expenses.push({ id: doc.id, ...doc.data() });
+                });
+                renderExpenses();
+                updateSummary();
+            }, (error) => {
+                console.error("Error fetching expenses:", error);
+                showCustomAlert("Gagal memuat pengeluaran dari database.");
+            });
+        }
+    </script>
+</body>
+</html>
